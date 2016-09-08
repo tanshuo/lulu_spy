@@ -10,10 +10,12 @@ function _inherits(subClass, superClass) { if (typeof superClass !== "function" 
 
 var numOfPlayer = 0;
 var targetDOM = {};
+var targetField = {};
 var players = [];
 var spys = [];
 var result = {};
 var broadcasterID = '';
+var log = '';
 
 var parseResult = function parseResult(result) {
   var keys = Object.keys(result);
@@ -39,6 +41,11 @@ var parseResult = function parseResult(result) {
       }
     }
   }
+};
+
+var write_log = function write_log(text) {
+  log = log + "\n" + text;
+  targetField.forceUpdate();
 };
 
 var getPlayerKeys = function getPlayerKeys(num) {
@@ -78,6 +85,27 @@ var Broadcaster = React.createClass({
         onChange: this.handleChange
       })
     );
+  }
+});
+
+var TextFiled = React.createClass({
+  displayName: 'TextFiled',
+
+  getInitialState: function getInitialState() {
+    targetField = this;
+    return { mlog: log };
+  },
+  handleChange: function handleChange(e) {
+    this.setState({ mlog: e.target.value });
+  },
+  render: function render() {
+    this.setState({ mlog: log });
+    return React.createElement('textarea', {
+      autoComplete: 'off',
+      wrap: 'logical',
+      spellCheck: 'false',
+      value: this.state.mlog
+    });
   }
 });
 
@@ -170,7 +198,7 @@ var CreateButton = function (_React$Component) {
   function CreateButton() {
     _classCallCheck(this, CreateButton);
 
-    var _this = _possibleConstructorReturn(this, Object.getPrototypeOf(CreateButton).call(this));
+    var _this = _possibleConstructorReturn(this, (CreateButton.__proto__ || Object.getPrototypeOf(CreateButton)).call(this));
 
     _this.handleClick = _this.handleClick.bind(_this);
     return _this;
@@ -180,8 +208,26 @@ var CreateButton = function (_React$Component) {
     key: 'handleClick',
     value: function handleClick() {
       parseResult(result);
-      $.post("http://mofangvr.com:30001/api/spy/start", { players: players, spys: spys, broadcasterID: broadcasterID }, function (data) {
-        alert('page content: ' + data);
+      write_log('creating game...');
+      $.ajax({
+        type: "POST",
+        contentType: "application/json",
+        url: "/api/spy",
+        data: JSON.stringify({ players: players, spys: spys, broadcasterID: broadcasterID }),
+        success: function success(data) {
+          var result = data.result;
+          try {
+            var json = JSON.parse(result);
+          } catch (e) {
+            return write_log('data error');
+          }
+          if (json.error) {
+            return write_log(json.error);
+          } else {
+            return write_log(json.result);
+          }
+        },
+        dataType: "json"
       });
     }
   }, {
@@ -205,7 +251,7 @@ var Compact = function (_React$Component2) {
   function Compact() {
     _classCallCheck(this, Compact);
 
-    return _possibleConstructorReturn(this, Object.getPrototypeOf(Compact).apply(this, arguments));
+    return _possibleConstructorReturn(this, (Compact.__proto__ || Object.getPrototypeOf(Compact)).apply(this, arguments));
   }
 
   _createClass(Compact, [{
@@ -217,7 +263,8 @@ var Compact = function (_React$Component2) {
         React.createElement(Broadcaster, null),
         React.createElement(NumberOfPlayers, null),
         React.createElement(Form, null),
-        React.createElement(CreateButton, null)
+        React.createElement(CreateButton, null),
+        React.createElement(TextFiled, null)
       );
     }
   }]);

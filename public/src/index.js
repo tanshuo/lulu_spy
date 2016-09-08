@@ -1,10 +1,12 @@
 
 var numOfPlayer = 0;
 var targetDOM = {};
+var targetField = {};
 var players = [];
 var spys = [];
 var result = {};
 var broadcasterID = '';
+var log = '';
 
 var parseResult = function(result){
   var keys = Object.keys(result)
@@ -31,6 +33,11 @@ var parseResult = function(result){
     }
   }
 }
+
+var write_log = function(text){
+  log = log + "\n" + text;
+  targetField.forceUpdate();
+};
 
 var getPlayerKeys = function(num){
   var results = [];
@@ -66,6 +73,28 @@ var Broadcaster = React.createClass({
             onChange={this.handleChange}
           />
         </form>
+      );
+    }
+});
+
+var TextFiled = React.createClass({
+    getInitialState: function() {
+      targetField = this;
+      return {mlog : log};
+    },
+    handleChange:  function(e) {
+      this.setState({mlog : e.target.value});
+    },
+    render: function(){
+      this.setState({mlog : log});
+       return (
+        <textarea 
+        autoComplete="off" 
+        wrap="logical" 
+        spellCheck="false"
+        value = {this.state.mlog}
+        />
+      
       );
     }
 });
@@ -166,13 +195,30 @@ class CreateButton extends React.Component {
   }
   handleClick() {
     parseResult(result);
-    $.post(
-        "http://mofangvr.com:30001/api/spy/start",
-        {players : players, spys : spys, broadcasterID : broadcasterID},
-        function(data) {
-           alert('page content: ' + data);
+    write_log('creating game...');
+    $.ajax({
+      type: "POST",
+      contentType: "application/json",
+      url: "/api/spy",
+      data:  JSON.stringify({players : players, spys : spys, broadcasterID : broadcasterID}),
+      success: function(data) {
+        var result = data.result;
+        try{
+          var json = JSON.parse(result);
         }
-    );
+        catch(e){
+          return write_log('data error');
+        }
+        if(json.error){
+          return write_log(json.error);
+          
+        }
+        else{
+          return write_log(json.result);
+        }
+      },
+      dataType: "json"
+    });
   }
   render() {
     
@@ -200,6 +246,9 @@ class Compact extends React.Component {
         <CreateButton
          
         />
+        <TextFiled
+         
+        />
       </div>
     );
   }
@@ -210,5 +259,6 @@ ReactDOM.render(
   <Compact name="Compact" />,
   document.getElementById('compact')
 );
+
 
 

@@ -9,6 +9,7 @@
         "mongoose" : "*",
         "passport" : "*",
         "passport-local" : "*",
-        "flux": "*"
+        "flux": "*",
+        "request": "^2.72.0"
 	}
 }
