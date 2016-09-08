@@ -15,6 +15,7 @@ var players = [];
 var spys = [];
 var result = {};
 var broadcasterID = '';
+var whoToKill = '';
 var log = '';
 
 var parseResult = function parseResult(result) {
@@ -64,6 +65,30 @@ var getStatusKeys = function getStatusKeys(num) {
   return results;
 };
 
+var BlackList = React.createClass({
+  displayName: 'BlackList',
+
+  getInitialState: function getInitialState() {
+    return { who_to_kill: '' };
+  },
+  handleChange: function handleChange(e) {
+    whoToKill = e.target.value;
+    this.setState({ who_to_kill: e.target.value });
+  },
+  render: function render() {
+    return React.createElement(
+      'form',
+      { className: 'commentForm' },
+      React.createElement('input', {
+        type: 'text',
+        placeholder: '将要被杀死的玩家ID',
+        value: this.state.who_to_kill,
+        onChange: this.handleChange
+      })
+    );
+  }
+});
+
 var Broadcaster = React.createClass({
   displayName: 'Broadcaster',
 
@@ -80,7 +105,7 @@ var Broadcaster = React.createClass({
       { className: 'commentForm' },
       React.createElement('input', {
         type: 'text',
-        placeholder: 'empty',
+        placeholder: '房间号',
         value: this.state.broadcasterID,
         onChange: this.handleChange
       })
@@ -172,7 +197,7 @@ var Form = React.createClass({
       indents.push(React.createElement('input', {
         'data-tag': i,
         type: 'text',
-        placeholder: 'Player ID...',
+        placeholder: '玩家 ID...',
         value: this.state["player" + '_' + i],
         key: "player" + '_' + i,
         onChange: this.handleChange.bind(this, 'player', 'player' + '_' + i)
@@ -219,7 +244,60 @@ var CreateButton = function (_React$Component) {
           try {
             var json = JSON.parse(result);
           } catch (e) {
-            return write_log('data error');
+            return write_log(result);
+          }
+          if (json.error) {
+            return write_log(json.error);
+          } else {
+            return write_log(json.result);
+          }
+        },
+        dataType: "json"
+      });
+    }
+  }, {
+    key: 'render',
+    value: function render() {
+
+      return React.createElement(
+        'button',
+        { type: 'button', onClick: this.handleClick },
+        '创建游戏.'
+      );
+    }
+  }]);
+
+  return CreateButton;
+}(React.Component);
+
+var StartButton = function (_React$Component2) {
+  _inherits(StartButton, _React$Component2);
+
+  function StartButton() {
+    _classCallCheck(this, StartButton);
+
+    var _this2 = _possibleConstructorReturn(this, (StartButton.__proto__ || Object.getPrototypeOf(StartButton)).call(this));
+
+    _this2.handleClick = _this2.handleClick.bind(_this2);
+    return _this2;
+  }
+
+  _createClass(StartButton, [{
+    key: 'handleClick',
+    value: function handleClick() {
+
+      write_log('starting game...');
+      $.ajax({
+        type: "POST",
+        contentType: "application/json",
+        url: "/api/spy/start",
+        data: JSON.stringify({ broadcasterID: broadcasterID }),
+        success: function success(data) {
+          var result = data.result;
+          try {
+            var json = JSON.parse(result);
+          } catch (e) {
+            return write_log(result);
           }
           if (json.error) {
             return write_log(json.error);
@@ -242,11 +320,64 @@ var CreateButton = function (_React$Component) {
     }
   }]);
 
-  return CreateButton;
+  return StartButton;
 }(React.Component);
 
-var Compact = function (_React$Component2) {
-  _inherits(Compact, _React$Component2);
+var KillButton = function (_React$Component3) {
+  _inherits(KillButton, _React$Component3);
+
+  function KillButton() {
+    _classCallCheck(this, KillButton);
+
+    var _this3 = _possibleConstructorReturn(this, (KillButton.__proto__ || Object.getPrototypeOf(KillButton)).call(this));
+
+    _this3.handleClick = _this3.handleClick.bind(_this3);
+    return _this3;
+  }
+
+  _createClass(KillButton, [{
+    key: 'handleClick',
+    value: function handleClick() {
+      parseResult(result);
+      write_log('killing player...');
+      $.ajax({
+        type: "POST",
+        contentType: "application/json",
+        url: "/api/spy/kill",
+        data: JSON.stringify({ playerId: whoToKill, broadcasterID: broadcasterID }),
+        success: function success(data) {
+          var result = data.result;
+          try {
+            var json = JSON.parse(result);
+          } catch (e) {
+            return write_log(result);
+          }
+          if (json.error) {
+            return write_log(json.error);
+          } else {
+            return write_log(json.result);
+          }
+        },
+        dataType: "json"
+      });
+    }
+  }, {
+    key: 'render',
+    value: function render() {
+
+      return React.createElement(
+        'button',
+        { type: 'button', onClick: this.handleClick },
+        '杀死玩家.'
+      );
+    }
+  }]);
+
+  return KillButton;
+}(React.Component);
+
+var Compact = function (_React$Component4) {
+  _inherits(Compact, _React$Component4);
 
   function Compact() {
     _classCallCheck(this, Compact);
@@ -264,7 +395,10 @@ var Compact = function (_React$Component2) {
         React.createElement(NumberOfPlayers, null),
         React.createElement(Form, null),
         React.createElement(CreateButton, null),
-        React.createElement(TextFiled, null)
+        React.createElement(StartButton, null),
+        React.createElement(KillButton, null),
+        React.createElement(TextFiled, null),
+        React.createElement(BlackList, null)
       );
     }
   }]);

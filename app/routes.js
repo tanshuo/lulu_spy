@@ -73,6 +73,61 @@ module.exports = function(app, passport) {
             }
        });
     });
+
+    app.post('/api/spy/start', isLoggedIn, function(req, res){
+        var options = {
+            method: 'post',
+            url: "http://127.0.0.1:30001/api/spy/start",
+            body: req.body,
+            json: true
+        };
+      
+       request(options, (err, response, body) => {
+            if(err){
+
+                res.send({status: "failed", result: err});
+            }
+            else{
+                console.log(body);
+               	
+                if(body.error){
+
+                    res.send({status: "fail", result: body.error});
+                }
+                else{
+                    res.send({status: "ok", result: body});
+                }
+            }
+       });
+    });
+
+    app.post('/api/spy/kill', isLoggedIn, function(req, res){
+        var options = {
+            method: 'post',
+            url: "http://127.0.0.1:30001/api/spy/kill",
+            body: req.body,
+            json: true
+        };
+      
+       request(options, (err, response, body) => {
+            if(err){
+
+                res.send({status: "failed", result: err});
+            }
+            else{
+                console.log(body);
+               	
+                if(body.error){
+
+                    res.send({status: "fail", result: body.error});
+                }
+                else{
+                    res.send({status: "ok", result: body});
+                }
+            }
+       });
+    });
+    
     
     function isLoggedIn(req, res, next) {
         next();

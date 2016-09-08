@@ -6,6 +6,7 @@ var players = [];
 var spys = [];
 var result = {};
 var broadcasterID = '';
+var whoToKill = '';
 var log = '';
 
 var parseResult = function(result){
@@ -55,6 +56,28 @@ var getStatusKeys = function(num){
   return results;
 };
 
+var BlackList = React.createClass({
+  getInitialState: function() {
+    return {who_to_kill : ''};
+  },
+    handleChange : function(e){
+      whoToKill = e.target.value;
+      this.setState({who_to_kill : e.target.value});
+    },
+    render: function(){
+       return (
+        <form className="commentForm">
+          <input
+            type="text"
+            placeholder='将要被杀死的玩家ID'
+            value={this.state.who_to_kill}
+            onChange={this.handleChange}
+          />
+        </form>
+      );
+    }
+});
+
 var Broadcaster = React.createClass({
   getInitialState: function() {
     return {broadcasterID : ''};
@@ -68,7 +91,7 @@ var Broadcaster = React.createClass({
         <form className="commentForm">
           <input
             type="text"
-            placeholder='empty'
+            placeholder='房间号'
             value={this.state.broadcasterID}
             onChange={this.handleChange}
           />
@@ -164,7 +187,7 @@ var Form = React.createClass({
         <input
           data-tag={i}
           type="text"
-          placeholder="Player ID..."
+          placeholder="玩家 ID..."
           value={this.state[("player" + '_' + i)]}
           key={"player" + '_' + i}
           onChange={this.handleChange.bind(this, 'player', 'player' + '_' + i)}
@@ -207,7 +230,49 @@ class CreateButton extends React.Component {
           var json = JSON.parse(result);
         }
         catch(e){
-          return write_log('data error');
+          return write_log(result);
+        }
+        if(json.error){
+          return write_log(json.error);
+          
+        }
+        else{
+          return write_log(json.result);
+        }
+      },
+      dataType: "json"
+    });
+  }
+  render() {
+    
+    return (
+      <button type="button" onClick={this.handleClick}>
+        创建游戏.
+      </button>
+    );
+  }
+}
+
+class StartButton extends React.Component {
+  constructor() {
+    super();
+    this.handleClick = this.handleClick.bind(this);
+  }
+  handleClick() {
+   
+    write_log('starting game...');
+    $.ajax({
+      type: "POST",
+      contentType: "application/json",
+      url: "/api/spy/start",
+      data:  JSON.stringify({broadcasterID : broadcasterID}),
+      success: function(data) {
+        var result = data.result;
+        try{
+          var json = JSON.parse(result);
+        }
+        catch(e){
+          return write_log(result);
         }
         if(json.error){
           return write_log(json.error);
@@ -230,6 +295,48 @@ class CreateButton extends React.Component {
   }
 }
 
+class KillButton extends React.Component {
+  constructor() {
+    super();
+    this.handleClick = this.handleClick.bind(this);
+  }
+  handleClick() {
+    parseResult(result);
+    write_log('killing player...');
+    $.ajax({
+      type: "POST",
+      contentType: "application/json",
+      url: "/api/spy/kill",
+      data:  JSON.stringify({playerId : whoToKill, broadcasterID : broadcasterID}),
+      success: function(data) {
+        var result = data.result;
+        try{
+          var json = JSON.parse(result);
+        }
+        catch(e){
+          return write_log(result);
+        }
+        if(json.error){
+          return write_log(json.error);
+          
+        }
+        else{
+          return write_log(json.result);
+        }
+      },
+      dataType: "json"
+    });
+  }
+  render() {
+    
+    return (
+      <button type="button" onClick={this.handleClick}>
+        杀死玩家.
+      </button>
+    );
+  }
+}
+
 class Compact extends React.Component {
   render() {
     return (
@@ -246,14 +353,26 @@ class Compact extends React.Component {
         <CreateButton
          
         />
+        <StartButton
+         
+        />
+        <KillButton
+         
+        />
         <TextFiled
          
         />
+        <BlackList
+         
+        />
+        
       </div>
     );
   }
   
 }
+
+
 
 ReactDOM.render(
   <Compact name="Compact" />,
